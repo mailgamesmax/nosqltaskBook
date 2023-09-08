@@ -10,6 +10,13 @@ namespace BookNoSql
 {
     internal class Book
     {
+        public void RecoverBookFromMongo(int id, string title, int pageAmount)
+        {
+            var createdBook = new Book();        
+            createdBook = new Book(id, title, pageAmount);
+            AllBooks.Add(createdBook);
+        }
+
         public void CreateBook()
         {
             var createdBook = new Book();
@@ -21,7 +28,7 @@ namespace BookNoSql
             AllBooks.Add(createdBook);
 
             var mongo = new MongoConnection();
-            mongo.AddBook(createdBook);
+            mongo.AddBookToMongo(createdBook);
 
             var page = new Page();
             page.CreateFirstPage(createdID, newBookTitle);
@@ -43,7 +50,8 @@ namespace BookNoSql
             int i = 1;
             foreach (var book in AllBooks) 
             {                
-                Console.WriteLine($"{i}: {book.Id} knygoj '{book.Title}' yra lapu: {book.PagesAmount}");
+                Console.WriteLine($"{i}): {book.Id} knygoj '{book.Title}' yra lapu: {book.PagesAmount}");
+                    i++;
             }
             }
             else
@@ -62,12 +70,12 @@ namespace BookNoSql
             Title = title;
             PagesAmount = 0;
         }
-        /*public Book(int id, string title, int pageAmount)
+        public Book(int id, string title, int pageAmount)
         {
             Id = id;
             Title = title;
             PagesAmount = pageAmount;
-        }*/
+        }
 
         public int Id { get; set; }
         public string Title { get; set; }
@@ -81,20 +89,7 @@ namespace BookNoSql
  
 
 
-/*    internal abstract class IdGenerator 
-    {
 
-        public static int RandomNumberGenerator () 
-        {
-            Random random = new Random();
-            int rantomInt = random.Next(1, 21);
-            return rantomInt;
-        }
-        
-        public static List<int> BooksID = new List<int>()
-        //public static Dictionary<int, int> BookPagesID = new Dictionary<int, int>
-
-    }*/
 
 
 }

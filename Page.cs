@@ -1,6 +1,9 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using MongoDB.Driver.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,8 +11,16 @@ namespace BookNoSql
 {
     internal class Page
     {
-        public void AddPage()
+        public void RecoverPagesFromMongo(int bookId, string content, int pageNr, ObjectId id)
         {
+            var recoveredPage = new Page();
+            recoveredPage = new Page(bookId, content, pageNr, id);
+            AllBooksAllPages.Add(recoveredPage);
+        }
+
+        public void AddPageFromApp()
+        {
+            var mongo = new MongoConnection();
             Console.Write("knygos id? ");
             int inputBookID = int.Parse(Console.ReadLine());
 
@@ -27,6 +38,8 @@ namespace BookNoSql
                 AllBooksAllPages.Add(newPage);
                 var book = new Book();
                 book.UpdatePageAmount(inputBookID, newPageNr);
+
+                mongo.UpdateBookPagesToMongo(inputBookID, newPageNr);
             }
             else
             {
@@ -35,8 +48,10 @@ namespace BookNoSql
             }
 
             var createdPage = new Page();
-            createdPage = new Page(inputBookID, content, newPageNr);
+            createdPage = new Page(inputBookID, content, newPageNr);            
+            mongo.AddPageToMongo(createdPage);
         }
+
 
         public void CreateFirstPage(int bookID, string bookTitle)
         {
@@ -46,7 +61,8 @@ namespace BookNoSql
             AllBooksAllPages.Add(createdPage);
 
             var mongo = new MongoConnection();
-            mongo.AddPage(createdPage);
+            mongo.DbConnect();
+            mongo.AddPageToMongo(createdPage);
 
         }
 
@@ -56,7 +72,7 @@ namespace BookNoSql
             {
                 foreach (var page in AllBooksAllPages)
                 {
-                    Console.WriteLine($"{page.PageNr}-\n {page.BookId} - {page.Content}");
+                    Console.WriteLine($"* lapo nr {page.PageNr}-\n knygos id {page.BookId} - lapo turinys {page.Content}");
                 }
             }
             else
@@ -65,6 +81,28 @@ namespace BookNoSql
             }
 
         }
+
+        
+        public void UniqIiGenerator(int bookId) 
+        {
+            string newPageID;
+            var bookPages = AllBooksAllPages.Where(p => p.BookId == bookId).ToList();
+            int bookPagesQ = bookPages.Count();
+            if (bookPagesQ > 1) 
+            {
+                newPageID = bookId.ToString()+"."+(bookPagesQ+1).ToString();
+            }
+            else 
+            {
+                newPageID = bookId.ToString() + "."+"0";
+            }
+        }
+        
+        //public static List<int> BooksID = new List<int>()
+        //public static Dictionary<int, int> BookPagesID = new Dictionary<int, int>
+
+    
+
         // constructors
         public Page() { }
 
@@ -81,6 +119,13 @@ namespace BookNoSql
             PageNr = pageNr;
         }
 
+        public Page(int bookId, string content, int pageNr, ObjectId id) : this(bookId, content)
+        {
+            PageNr = pageNr;
+            Id = id;
+        }
+
+        public ObjectId Id { get; set; }
         public int BookId { get; set; }
         public int PageNr { get; set; }
         public string Content { get; set; }

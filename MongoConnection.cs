@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,15 +19,43 @@ namespace BookNoSql
             //List<string> databases = client.ListDatabaseNames().ToList();
         }
 
-        public void AddBook(Book book) 
+        public void importAllBooksFromMongo()
         {
-        
-            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");            
+            DbConnect();
+            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");
+            var allBooks = bookCollection.Find(_ => true).ToList();
+
+            var book = new Book();
+            foreach (var oneBook in allBooks) 
+            {
+                book.RecoverBookFromMongo(oneBook.Id, oneBook.Title, oneBook.PagesAmount);
+            }
+        }
+
+        public void importAllPagesFromMongo()
+        {
+            DbConnect();
+            var pageCollection = mongoClient.GetDatabase("BooksPages").GetCollection<Page>("Page");
+            var allPages = pageCollection.Find(_ => true).ToList();
+
+            var page = new Page();
+            foreach (var onePage in allPages)
+            {
+                page.RecoverPagesFromMongo(onePage.BookId, onePage.Content, onePage.PageNr, onePage.Id);
+            }
+        }
+
+        public void AddBookToMongo(Book book) 
+        {            
+            DbConnect();
+
+            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");
             bookCollection.InsertOne(book);
         }
 
-        public void AddPage(Page page)
+        public void AddPageToMongo(Page page)
         {
+            DbConnect();
 
             var pageCollection = mongoClient.GetDatabase("BooksPages").GetCollection<Page>("Page");
             pageCollection.InsertOne(page);
@@ -36,6 +65,35 @@ namespace BookNoSql
         {
             Console.WriteLine(database);
         }*/
+        public void UpdateBookPagesToMongo(int bookId, int newPageNr) 
+        {
+            //var mongo = new MongoConnection();
+            DbConnect();
+            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");
+
+            var filterById = Builders<Book>.Filter.Eq("Id", bookId);
+            var selectedBooks = bookCollection.Find(filterById).ToList();
+            var updatePageAmount = Builders<Book>.Update.Set("PagesAmount", newPageNr);
+            
+            var updatesResult = bookCollection.UpdateMany(filterById, updatePageAmount);
+            if (updatesResult.ModifiedCount > 0)
+            {
+                Console.WriteLine("Book updates done");
+            }
+            else
+            {
+                Console.WriteLine("Boooks uptades - something wrong");
+            }
+
+        }
+
+        public List<Book> SelectBookById(int bookId)
+        {
+            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");
+            var selectedBook = Builders<Book>.Filter.Eq("Id", bookId);
+            var results = bookCollection.Find(selectedBook).ToList();
+            return results;
+        }
 
         public List<Book> FatchBook(string bookName) 
         {
