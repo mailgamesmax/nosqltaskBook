@@ -11,14 +11,14 @@ namespace BookNoSql
 {
     internal class Page
     {
-        public void RecoverPagesFromMongo(int bookId, string content, int pageNr, ObjectId id)
+        public void RecoverPagesFromMongo(int bookId, string content, int pageNr, string id)
         {
             var recoveredPage = new Page();
             recoveredPage = new Page(bookId, content, pageNr, id);
             AllBooksAllPages.Add(recoveredPage);
         }
 
-        public void AddPageFromApp()
+        public void AddPage()
         {
             var mongo = new MongoConnection();
             Console.Write("knygos id? ");
@@ -27,43 +27,40 @@ namespace BookNoSql
             Console.WriteLine("kuriamas tekstas: ");
             string content = Console.ReadLine();
 
-            int newPageNr = 1;
             var allPagesOfselectedBook = AllBooksAllPages.Where(p => p.BookId == inputBookID).ToList();
             if (allPagesOfselectedBook.Count > 0)
             {
 
-                newPageNr = allPagesOfselectedBook.Count;
+                int newPageNr = allPagesOfselectedBook.Count;
+                string newPageId = UniqIdPageGenerator(inputBookID, newPageNr);
 
-                var newPage = new Page(inputBookID, content, newPageNr);
+                var newPage = new Page(inputBookID, content, newPageNr, newPageId);
                 AllBooksAllPages.Add(newPage);
+                
                 var book = new Book();
                 book.UpdatePageAmount(inputBookID, newPageNr);
-
                 mongo.UpdateBookPagesToMongo(inputBookID, newPageNr);
+     
+                mongo.AddPageToMongo(newPage);
+
             }
             else
             {
                 Console.WriteLine("-----nerasti page arba knyga------");
-
             }
 
-            var createdPage = new Page();
-            createdPage = new Page(inputBookID, content, newPageNr);            
-            mongo.AddPageToMongo(createdPage);
         }
-
 
         public void CreateFirstPage(int bookID, string bookTitle)
         {
-
             string content = $"tai puiki knyga pavadinimu '{bookTitle}'\n";
-            var createdPage = new Page(bookID, content);
+            string firsPageId = bookID.ToString() + "." + "0";
+            var createdPage = new Page(bookID, content, firsPageId);
             AllBooksAllPages.Add(createdPage);
 
             var mongo = new MongoConnection();
             mongo.DbConnect();
             mongo.AddPageToMongo(createdPage);
-
         }
 
         public void ShowAllPages() // CONTROL ONLY
@@ -82,53 +79,34 @@ namespace BookNoSql
 
         }
 
-        
-        public void UniqIiGenerator(int bookId) 
+        public string UniqIdPageGenerator(int bookId, int newPageNr)
         {
-            string newPageID;
-            var bookPages = AllBooksAllPages.Where(p => p.BookId == bookId).ToList();
-            int bookPagesQ = bookPages.Count();
-            if (bookPagesQ > 1) 
-            {
-                newPageID = bookId.ToString()+"."+(bookPagesQ+1).ToString();
-            }
-            else 
-            {
-                newPageID = bookId.ToString() + "."+"0";
-            }
+         string newPageID;
+         newPageID = bookId.ToString() + "." + newPageNr.ToString();
+         return newPageID;         
         }
-        
-        //public static List<int> BooksID = new List<int>()
-        //public static Dictionary<int, int> BookPagesID = new Dictionary<int, int>
-
-    
 
         // constructors
         public Page() { }
 
-        public Page(int bookId, string content)
+        public Page(int bookId, string content, string pageUniqId)
         {
             BookId = bookId;
             Content = content;
             PageNr = 0;
-
+            Id = pageUniqId;
         }
 
-        public Page(int bookId, string content, int pageNr) : this(bookId, content)
+        public Page(int bookId, string content, int pageNr, string pageUniqId) : this(bookId, content, pageUniqId)
         {
             PageNr = pageNr;
+            
         }
-
-        public Page(int bookId, string content, int pageNr, ObjectId id) : this(bookId, content)
-        {
-            PageNr = pageNr;
-            Id = id;
-        }
-
-        public ObjectId Id { get; set; }
+        
         public int BookId { get; set; }
         public int PageNr { get; set; }
         public string Content { get; set; }
+        public string Id { get; set; }
         public static List<Page> AllBooksAllPages { get; set; } = new List<Page>();
 
         //pange end

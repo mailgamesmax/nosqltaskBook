@@ -22,7 +22,7 @@ namespace BookNoSql
         public void importAllBooksFromMongo()
         {
             DbConnect();
-            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");
+            var bookCollection = mongoClient.GetDatabase("MyMongoBooksDatabase").GetCollection<Book>("Book");
             var allBooks = bookCollection.Find(_ => true).ToList();
 
             var book = new Book();
@@ -35,7 +35,7 @@ namespace BookNoSql
         public void importAllPagesFromMongo()
         {
             DbConnect();
-            var pageCollection = mongoClient.GetDatabase("BooksPages").GetCollection<Page>("Page");
+            var pageCollection = mongoClient.GetDatabase("MyMongoBooksDatabase").GetCollection<Page>("Page");
             var allPages = pageCollection.Find(_ => true).ToList();
 
             var page = new Page();
@@ -49,7 +49,7 @@ namespace BookNoSql
         {            
             DbConnect();
 
-            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");
+            var bookCollection = mongoClient.GetDatabase("MyMongoBooksDatabase").GetCollection<Book>("Book");
             bookCollection.InsertOne(book);
         }
 
@@ -57,7 +57,7 @@ namespace BookNoSql
         {
             DbConnect();
 
-            var pageCollection = mongoClient.GetDatabase("BooksPages").GetCollection<Page>("Page");
+            var pageCollection = mongoClient.GetDatabase("MyMongoBooksDatabase").GetCollection<Page>("Page");
             pageCollection.InsertOne(page);
         }
         //print databases
@@ -69,7 +69,7 @@ namespace BookNoSql
         {
             //var mongo = new MongoConnection();
             DbConnect();
-            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");
+            var bookCollection = mongoClient.GetDatabase("MyMongoBooksDatabase").GetCollection<Book>("Book");
 
             var filterById = Builders<Book>.Filter.Eq("Id", bookId);
             var selectedBooks = bookCollection.Find(filterById).ToList();
@@ -89,7 +89,7 @@ namespace BookNoSql
 
         public List<Book> SelectBookById(int bookId)
         {
-            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");
+            var bookCollection = mongoClient.GetDatabase("MyMongoBooksDatabase").GetCollection<Book>("Book");
             var selectedBook = Builders<Book>.Filter.Eq("Id", bookId);
             var results = bookCollection.Find(selectedBook).ToList();
             return results;
@@ -97,7 +97,7 @@ namespace BookNoSql
 
         public List<Book> FatchBook(string bookName) 
         {
-            var bookCollection = mongoClient.GetDatabase("MyBooks").GetCollection<Book>("Book");
+            var bookCollection = mongoClient.GetDatabase("MyMongoBooksDatabase").GetCollection<Book>("Book");
             var selectedBook = Builders<Book>.Filter.Eq("Title", bookName);
             var results = bookCollection.Find(selectedBook).ToList();
             return results;
